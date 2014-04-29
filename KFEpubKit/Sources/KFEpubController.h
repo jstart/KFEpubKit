@@ -63,5 +63,6 @@
 
 - (void)openAsynchronous:(BOOL)asynchronous;
 
+- (void)openWithCompletionBlock:(void (^)(KFEpubContentModel * contentModel)) completionBlock;
 
 @end

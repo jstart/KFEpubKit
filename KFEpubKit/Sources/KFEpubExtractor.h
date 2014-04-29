@@ -55,6 +55,8 @@
 
 - (BOOL)start:(BOOL)asynchronous;
 
+- (void)startWithCompletionBlock:(void (^)(KFEpubExtractor * extractor)) completionBlock;
+
 - (void)cancel;
 
 

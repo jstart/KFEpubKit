@@ -87,6 +87,18 @@
     return NO;
 }
 
+- (void)startWithCompletionBlock:(void (^)(KFEpubExtractor * extractor)) completionBlock{
+    [self.extractingQueue addOperationWithBlock:^{
+        
+        [SSZipArchive unzipFileAtPath:self.epubURL.path toDestination:self.destinationURL.path];
+    }];
+    [self.extractingQueue addOperationWithBlock:^{
+        
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            completionBlock(self);
+        }];
+    }];
+}
 
 - (void)doneExtracting:(NSNumber *)didSuceed
 {

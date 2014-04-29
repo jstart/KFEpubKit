@@ -60,6 +60,40 @@
     [self.extractor start:asynchronous];
 }
 
+- (void)openWithCompletionBlock:(void (^)(KFEpubContentModel * contentModel)) completionBlock{
+    self.extractor = [[KFEpubExtractor alloc] initWithEpubURL:self.epubURL andDestinationURL:self.destinationURL];
+    [self.extractor startWithCompletionBlock:^(KFEpubExtractor * extractor){
+        self.parser = [KFEpubParser new];
+        NSURL *rootFile = [self.parser rootFileForBaseURL:self.destinationURL];
+        _epubContentBaseURL = [rootFile URLByDeletingLastPathComponent];
+        
+        NSError *error = nil;
+        NSString *content = [NSString stringWithContentsOfURL:rootFile encoding:NSUTF8StringEncoding error:&error];
+        DDXMLDocument *document = [[DDXMLDocument alloc] initWithXMLString:content options:kNilOptions error:&error];
+        if (document)
+        {
+            _contentModel = [KFEpubContentModel new];
+            
+            self.contentModel.bookType = [self.parser bookTypeForBaseURL:self.destinationURL];
+            self.contentModel.bookEncryption = [self.parser contentEncryptionForBaseURL:self.destinationURL];
+            self.contentModel.metaData = [self.parser metaDataFromDocument:document];
+            self.contentModel.coverPath = [self.parser coverPathComponentFromDocument:document];
+            
+            if (!self.contentModel.metaData)
+            {
+                NSError *error = [NSError errorWithDomain:KFEpubKitErrorDomain code:1 userInfo:@{NSLocalizedDescriptionKey: @"No meta data found"}];
+                NSLog(@"%@", error);
+            }
+            else
+            {
+                self.contentModel.manifest = [self.parser manifestFromDocument:document];
+                self.contentModel.spine = [self.parser spineFromDocument:document];
+                self.contentModel.guide = [self.parser guideFromDocument:document];
+                completionBlock(self.contentModel);
+            }
+        }
+    }];
+}
 
 #pragma mark KFEpubExtractorDelegate Methods
 
